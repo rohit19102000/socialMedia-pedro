@@ -8,11 +8,14 @@ interface Props{
     post:IPost,
 }
 
+interface like{
+    userId:string,
+}
 export const Post = (props:Props ) => {
     const { post } = props;
     const [user] =useAuthState(auth)
 
-    const [likeAmount,setLikeAmount] = useState<number | null>(null)
+    const [likes,setLikes] = useState<like[] | null>(null)
 
     const likesRef = collection(db, 'likes');
 
@@ -20,11 +23,33 @@ export const Post = (props:Props ) => {
 
     const getLikes = async() =>{
      const data =  await getDocs(likesDoc)
-     setLikeAmount(data.docs.length)
+     setLikes(data.docs.map((doc) =>({userId:doc.data().userId})))
     }
   const addLike = async () => {
-    await addDoc(likesRef, { userId:user?.uid ,postId:post.id});
-  };
+    try{
+
+        await addDoc(likesRef, { userId:user?.uid ,postId:post.id});
+        if(user){
+            setLikes((prev) => prev? [...prev,{userId:user?.uid}]:[{userId:user?.uid}]);
+        }
+    }catch(error){
+        console.log(error);
+    }
+    };
+
+    const removeLike = async () => {
+    try{
+
+        await addDoc(likesRef, { userId:user?.uid ,postId:post.id});
+        if(user){
+            setLikes((prev) => prev? [...prev,{userId:user?.uid}]:[{userId:user?.uid}]);
+        }
+    }catch(error){
+        console.log(error);
+    }
+    };
+
+    const hasUserLiked = likes?.find((like) =>  like.userId === user?.uid)
 
     useEffect(() =>{
         getLikes();
@@ -44,8 +69,8 @@ export const Post = (props:Props ) => {
         <div className="footer">
             <p>@{post.username}</p>
         </div>
-            <button onClick={addLike}> &#128077;</button>
-           { likeAmount &&  <p>likes: {likeAmount}</p> }
+            <button onClick={addLike}> {hasUserLiked? <>&#128078;</> : <>&#128077;</> } </button>
+           { likes &&  <p>likes: {likes?.length}</p> }
                    
                    
     </div>
